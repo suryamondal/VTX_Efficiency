@@ -1,6 +1,8 @@
 
 #include "Utils.hh"
 
+typedef double (Utils::*UtilsMemFn)(TString x);
+
 using namespace std;
 
 Utils::Utils() {}
@@ -18,7 +20,8 @@ void Utils::Setup(std::map<TString, TString> motherMap,
 		  TString chnl,
 		  TTree *tree,
 		  TTree *mctree,
-		  std::map<TString, TString> &paramNames
+		  std::map<TString, TString> &paramNames,
+		  std::map<TString, TString> &extraParamNames
 		  ) {
 
   RCtr = (TTree*)tree->Clone("tree");
@@ -64,7 +67,10 @@ void Utils::Setup(std::map<TString, TString> motherMap,
     for(int ijp=0;ijp<int(particleResoFromPullNames.size());ijp++) {
       makeBranch(particleResoFromPullNames[ijp],it->first,it->second, cnt);
     }
-    
+  }
+  
+  for(auto it = extraParamNames.begin(); it!=extraParamNames.end(); it++) {
+    makeBranch("",it->first,it->second, cnt);
   }
   
   particleList = particleNames;
@@ -204,17 +210,26 @@ Long64_t Utils::countTracks(TString trk,
   int source = -10;
 
   cout<<" "<<cuts<<endl;
+  // std::function<double(TString)> fn_getDataValue = getDataValue;
+  // UtilsMemFn pp = &Utils::getDataValue;
   
   RCtr->SetNotify(0);
   Long64_t sum = 0;
   Long64_t nentries = RCtr->GetEntries();
   for(Long64_t ij=0;ij<nentries;ij++) {
+    
     TSelectorEntries ss(cuts);
     RCtr->Process(&ss,"",1,ij);
     if(!ss.GetSelectedRows()) {continue;}
     
     RCtr->GetEntry(ij);
-    if(ij%1000==0) {cout<<(nentries-ij)<<endl;}
+    if(ij%10000==0) {cout<<(nentries-ij)<<endl;}
+    
+    // int isCutPass = selection::applyCut(channelName, fn_getDataValue);
+    int isCutPass = applyCut();
+    // cout<<" "<<runData<<" "<<evtData<<" "<<ss.GetSelectedRows()<<" "<<isCutPass<<endl;
+    // cout<<" "<<runData<<" "<<evtData<<" "<<isCutPass<<endl;
+    if(!isCutPass) {continue;}
     
     Long64_t tpos = ( evtData +
 		      runData*(*maxevt +1) +
@@ -342,10 +357,15 @@ int Utils::printEffi(TString common,
     signal += " && TMath::Abs(" + trk + "_genMotherPDG)==" + parMotherMap[trk];
     cout<<endl<<" "<<trk<<" "<<particleMap[trk]<<" efficiency and purity : signal cut:: "<<signal<<endl;
     
-    vector<TString> cutlist = {common,
-			       common+" && "+signal,
-			       common+" && "+signal+" && "+rank,
-			       common+" && "+rank};
+    // vector<TString> cutlist = {common,
+    // 			       common+" && "+signal,
+    // 			       common+" && "+signal+" && "+rank,
+    // 			       common+" && "+rank};
+    vector<TString> cutlist = {"",
+			       signal,
+			       signal+" && "+rank,
+			       rank};
+
     if(trk=="B0") {
       // auto nt1  = tr.Filter(cutlist[0].Data()).Count();
       // auto ns1  = tr.Filter(cutlist[1].Data()).Count();
@@ -417,38 +437,42 @@ void Utils::makeBranch(TString partname,
 		       TString parname,
 		       TString type,
 		       int *cnt) {
-  TString name = (partname + "_" + parname);
-  if(VariableDataType.find(type) == VariableDataType.end()) {
+  // cout<<partname<<" "<<parname<<endl;
+  TString name = (partname==""?"":(partname + "_")) + parname;
+  if(VariableDataType.find(type) == VariableDataType.end() &&
+     name=="") {
     cout<<" data type not found for "<<name<<endl;}
-  
-  int datatype = VariableDataType[type];
-  if(paramMap.find(name) == paramMap.end()) {
-    cout<<" name "<<name<<" type "<<type<<" "<<datatype<<" cnt "<<cnt[datatype]<<endl;
-    if(name.Contains("_mc")) {
-      if(type=="c_double") {
-	branchDouble.push_back(0);
-	MCtr->SetBranchAddress(name,&branchDouble[cnt[datatype]]);
-      } else if(type=="c_int") {
-      	branchInt.push_back(0);
-      	MCtr->SetBranchAddress(name,&branchInt[cnt[datatype]]);
-      } else if(type=="c_bool") {
-      	branchBool.push_back(0);
-      	MCtr->SetBranchAddress(name,&branchBool[cnt[datatype]]);
+  else {
+      
+    int datatype = VariableDataType[type];
+    if(paramMap.find(name) == paramMap.end()) {
+      cout<<" name "<<name<<" type "<<type<<" "<<datatype<<" cnt "<<cnt[datatype]<<endl;
+      if(name.Contains("_mc")) {
+	if(type=="c_double") {
+	  branchDouble.push_back(0);
+	  MCtr->SetBranchAddress(name,&branchDouble[cnt[datatype]]);
+	} else if(type=="c_int") {
+	  branchInt.push_back(0);
+	  MCtr->SetBranchAddress(name,&branchInt[cnt[datatype]]);
+	} else if(type=="c_bool") {
+	  branchBool.push_back(0);
+	  MCtr->SetBranchAddress(name,&branchBool[cnt[datatype]]);
+	}
+      } else {
+	if(type=="c_double") {
+	  branchDouble.push_back(0);
+	  RCtr->SetBranchAddress(name,&branchDouble[cnt[datatype]]);
+	} else if(type=="c_int") {
+	  branchInt.push_back(0);
+	  RCtr->SetBranchAddress(name,&branchInt[cnt[datatype]]);
+	} else if(type=="c_bool") {
+	  branchBool.push_back(0);
+	  RCtr->SetBranchAddress(name,&branchBool[cnt[datatype]]);
+	}
       }
-    } else {
-      if(type=="c_double") {
-	branchDouble.push_back(0);
-	RCtr->SetBranchAddress(name,&branchDouble[cnt[datatype]]);
-      } else if(type=="c_int") {
-	branchInt.push_back(0);
-	RCtr->SetBranchAddress(name,&branchInt[cnt[datatype]]);
-      } else if(type=="c_bool") {
-      	branchBool.push_back(0);
-      	RCtr->SetBranchAddress(name,&branchBool[cnt[datatype]]);
-      }
+      paramMap[name] = std::pair<TString,Int_t>(type,cnt[datatype]);
+      cnt[datatype]++;
     }
-    paramMap[name] = std::pair<TString,Int_t>(type,cnt[datatype]);
-    cnt[datatype]++;
   }
 }
 
@@ -464,4 +488,65 @@ double Utils::getDataValue(TString brdetails1)
   } else {
     return std::numeric_limits<double>::quiet_NaN();
   }
+}
+
+int Utils::applyCut()
+{
+  int outputVal = 0;
+  // cout<<getDataValue("mu_nVXDHits")<<" "<<getDataValue("K_nVXDHits")<<" "<<getDataValue("pisoft_nVXDHits")<<" "<<getDataValue("Dst_p_CMS")<<endl;
+  if(TMath::Abs(getDataValue("Dst_M_preFit")-2.01026) < 0.1 &&
+     TMath::Abs(getDataValue("D0_M_preFit")-1.86484) < 0.1 &&
+     TMath::Abs(getDataValue("Dst_M_preFit")-getDataValue("D0_M_preFit")-0.145426) < 0.005 &&
+     getDataValue("mu_dr") < 2 &&
+     TMath::Abs(getDataValue("mu_dz")) < 2 &&
+     getDataValue("K_dr") < 2 &&
+     TMath::Abs(getDataValue("K_dz")) < 2 && 
+     getDataValue("pisoft_dr") < 2 && 
+     TMath::Abs(getDataValue("pisoft_dz")) < 2 && 
+     getDataValue("mu_nVXDHits") > 0 &&
+     getDataValue("K_nVXDHits") > 0 &&
+     getDataValue("pisoft_nVXDHits") > 0 && // VXD = PXD+SVD+VTX 
+     getDataValue("Dst_p_CMS") < 2.5 // From momentum conservation
+     ) {
+    // cout<<" 0 outputVal "<<outputVal<<endl;
+    outputVal++;}
+  
+  if(channelName=="Kpi") {
+    if(getDataValue("pi_dr") < 2 &&
+       TMath::Abs(getDataValue("pi_dz")) < 2 &&
+       getDataValue("pi_nVXDHits") > 0
+       ) {
+      // cout<<" outputVal 1 "<<outputVal<<endl;
+      outputVal++;}
+  } else if(channelName=="K3pi") {
+    if(getDataValue("pi1_dr") < 2 &&
+       TMath::Abs(getDataValue("pi1_dz")) < 2 &&
+       getDataValue("pi1_nVXDHits") > 0 &&
+       getDataValue("pi2_dr") < 2 &&
+       TMath::Abs(getDataValue("pi2_dz")) < 2 &&
+       getDataValue("pi2_nVXDHits") > 0 &&
+       getDataValue("pi3_dr") < 2 &&
+       TMath::Abs(getDataValue("pi3_dz")) < 2 && 
+       getDataValue("pi3_nVXDHits") > 0
+       ) {
+      // cout<<" outputVal 2 "<<outputVal<<endl;
+      outputVal++;}
+  } else {outputVal = 10;}
+  
+  if(outputVal==2) {
+    // if(isBC==0) {
+    //   return 1;
+    // } else if(isBC==1 &&
+    // 	      getDataValue(trk+"_isSignal")==1) {
+    //   return 1;
+    // } else if(isBC==2 &&
+    // 	      getDataValue(trk+"_isSignal")==1 &&
+    // 	      getDataValue("B0_M_rank")==1) {
+    //   return 1;
+    // } else if(isBC==3 &&
+    // 	      getDataValue("B0_M_rank")==1) {
+    //   return 1;
+    // }
+    return 1;
+  } else {return 0;}
 }

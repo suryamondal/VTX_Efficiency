@@ -27,7 +27,8 @@ public :
 	     TString chnl,
 	     TTree *tree,
 	     TTree *mctree,
-	     std::map<TString, TString> &paramNames);
+	     std::map<TString, TString> &paramNames,
+	     std::map<TString, TString> &extraParamNames);
   
   Long64_t countTracks(TString trk,
 		       TString cuts,
@@ -40,6 +41,7 @@ public :
 		  TString parname,
 		  TString type,
 		  int *cnt);
+  int applyCut();
   
 public:
 

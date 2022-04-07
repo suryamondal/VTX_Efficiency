@@ -29,19 +29,30 @@ std::map<TString, TString> parList =
    {"z0Pull","c_double"},
    {"z0Err","c_double"},
    {"mdstIndex","c_double"},
-   {"particleSource","c_double"}
+   {"particleSource","c_double"},
+   {"dr","c_double"},
+   {"dz","c_double"},
+   {"nVXDHits","c_double"}
+  };
+
+std::map<TString, TString> extraBranches =
+  {{"Dst_M_preFit","c_double"},
+   {"D0_M_preFit","c_double"},
+   {"Dst_p_CMS","c_double"}
   };
 
 std::vector<std::vector<TString>> particleList =
   {{"pisoft", "mu", "K", "pi"},
-   {"pisoft", "mu", "K", "pi1"}};
+   {"pisoft", "mu", "K", "pi1","pi2","pi3"}};
 
 std::vector<TString> histoList = {"mcPT", "pt", "mcTheta", "theta"};
 std::vector<std::vector<std::vector<Double_t>>> histoBn =
   {{{20,0.,0.25},{20,0.,0.25},{20,0.,TMath::Pi()},{20,0.,TMath::Pi()}}, // pisoft
    {{20,0.,2.5},{20,0.,2.5},{20,0.,TMath::Pi()},{20,0.,TMath::Pi()}}, // mu
    {{20,0.,2.5},{20,0.,2.5},{20,0.,TMath::Pi()},{20,0.,TMath::Pi()}}, // K
-   {{20,0.,2.5},{20,0.,2.5},{20,0.,TMath::Pi()},{20,0.,TMath::Pi()}}}; // pi
+   {{20,0.,2.5},{20,0.,2.5},{20,0.,TMath::Pi()},{20,0.,TMath::Pi()}}, // pi/pi1
+   {{20,0.,2.5},{20,0.,2.5},{20,0.,TMath::Pi()},{20,0.,TMath::Pi()}}, // pi2
+   {{20,0.,2.5},{20,0.,2.5},{20,0.,TMath::Pi()},{20,0.,TMath::Pi()}}}; // pi3
 
 std::vector<std::vector<TString>> particleResoList =
   {{"pisoft", "mu", "K", "pi"},
@@ -87,5 +98,50 @@ const TString K3piCuts =
   "pi1_dr < 2 && TMath::Abs(pi1_dz) < 2 && pi1_nVXDHits > 0"
   "&& pi2_dr < 2 && TMath::Abs(pi2_dz) < 2 && pi2_nVXDHits > 0"
   "&& pi3_dr < 2 && TMath::Abs(pi3_dz) < 2 && pi3_nVXDHits > 0";
+
+// namespace selection {
+  
+//   template <typename T>  
+//   int applyCut(TString channel, T getDataVal)// std::function<double(TString)> getDataVal)
+//   {
+//     // auto getDataVal = std::function{t};
+//     int outputVal = 0;
+//     if(TMath::Abs(this->*getDataVal("Dst_M_preFit")-2.01026) < 0.1 &&
+//        TMath::Abs(getDataVal("D0_M_preFit")-1.86484) < 0.1 &&
+//        TMath::Abs(getDataVal("Dst_M_preFit")-getDataVal("D0_M_preFit")-0.145426) < 0.005 && // Lower cut is not in steering file (for now)
+//        getDataVal("mu_dr") < 2 &&
+//        TMath::Abs(getDataVal("mu_dz")) < 2 &&
+//        getDataVal("K_dr") < 2 &&
+//        TMath::Abs(getDataVal("K_dz")) < 2 && 
+//        getDataVal("pisoft_dr") < 2 && 
+//        TMath::Abs(getDataVal("pisoft_dz")) < 2 && 
+//        getDataVal("mu_nVXDHits") > 0 &&
+//        getDataVal("K_nVXDHits") > 0 &&
+//        getDataVal("pisoft_nVXDHits") > 0 && // VXD = PXD+SVD+VTX 
+//        getDataVal("Dst_p_CMS") < 2.5) { // From momentum conservation
+//       outputVal++;}
+    
+//     if(channel=="Kpi") {
+//       if(getDataVal("pi_dr") < 2 &&
+// 	 TMath::Abs(getDataVal("pi_dz")) < 2 &&
+// 	 getDataVal("pi_nVXDHits") > 0)  {
+// 	outputVal++;}
+//     } else if(channel=="K3pi") {
+//       if(getDataVal("pi1_dr") < 2 &&
+// 	 TMath::Abs(getDataVal("pi1_dz")) < 2 &&
+// 	 getDataVal("pi1_nVXDHits") > 0 &&
+// 	 getDataVal("pi2_dr") < 2 &&
+// 	 TMath::Abs(getDataVal("pi2_dz")) < 2 &&
+// 	 getDataVal("pi2_nVXDHits") > 0 &&
+// 	 getDataVal("pi3_dr") < 2 &&
+// 	 TMath::Abs(getDataVal("pi3_dz")) < 2 && 
+// 	 getDataVal("pi3_nVXDHits") > 0)  {
+// 	outputVal++;}
+//     } else {outputVal = 10;}
+    
+//     if(outputVal==2) {return 1;}
+//     else {return 0;}
+//   }; 
+// }
 
 #endif

@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 			tParResoFromPullList,histoResoFromPullList,histoResoFromPullBn,
 			channelList[cn],
 			RCtr, MCtr,
-			parList);
+			parList,extraBranches);
     testUtils[cn].printEffi(cutsList[cn],rank);
   }
   
