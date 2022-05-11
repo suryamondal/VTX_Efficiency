@@ -19,3 +19,10 @@ The branching fractions are normalized, but these two actually make up only
 Steering files for generation, simulation, reconstruction (everything that has
 to be done using basf2) in `steering/`. Offline (i.e. non-basf2-based) analysis
 in `offline/`.
+
+## Tracking flow
+```mermaid
+graph TD;
+id4[add_reconstruction]-->id3[add_prefilter_reconstruction]-->id2[add_prefilter_tracking_reconstruction]--toCDCCKF=False-->id1[add_track_finding]--toCDCCKF=True-->id0[add_vtx_track_finding];
+id7[add_mc_reconstruction]-->id6[add_mc_tracking_reconstruction]-->id5[add_tracking_reconstruction]--toCDCCKF=True-->id2;
+```
